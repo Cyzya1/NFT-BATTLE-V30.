@@ -1,18 +1,19 @@
-name: Build NFT BATTLE V31 Firebase APK
+
+name: Build NFT BATTLE V32 Firebase APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_BIG_UPDATE_V31_FIREBASE.zip"
-      - ".github/workflows/build-apk-v31.yml"
+      - "NFT_BATTLE_BIG_UPDATE_V32.zip"
+      - ".github/workflows/build-apk-v32.yml"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK V31 Firebase
+    name: Build Android APK V32 Firebase
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -36,14 +37,14 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract V31 Firebase project
+      - name: Extract V32 Firebase project
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_BIG_UPDATE_V31_FIREBASE.zip"
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_BIG_UPDATE_V32.zip"
 
           if [[ ! -s "$ARCHIVE" ]]; then
-            echo "::error::ZIP not found or empty: NFT_BATTLE_BIG_UPDATE_V31_FIREBASE.zip"
+            echo "::error::ZIP not found or empty: NFT_BATTLE_BIG_UPDATE_V32.zip"
             echo "Files in repository root:"
             ls -lah "$GITHUB_WORKSPACE"
             exit 1
@@ -71,7 +72,7 @@ jobs:
           )
 
           if [[ -z "$PROJECT" ]]; then
-            echo "::error::Android Gradle project not found in V31 Firebase ZIP"
+            echo "::error::Android Gradle project not found in V32 Firebase ZIP"
             find "$BASE" -type f \
               \( -name settings.gradle -o -name settings.gradle.kts \
                  -o -name build.gradle -o -name build.gradle.kts \)
@@ -95,7 +96,7 @@ jobs:
           fi
           echo "Firebase configuration file found for nft-battle-v31"
 
-      - name: Build V31 Firebase debug APK
+      - name: Build V32 Firebase debug APK
         shell: bash
         run: |
           set -euo pipefail
@@ -114,13 +115,13 @@ jobs:
           fi
 
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V31-FIREBASE-debug.apk"
-          ls -lh "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V31-FIREBASE-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V32-FIREBASE-debug.apk"
+          ls -lh "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V32-FIREBASE-debug.apk"
 
-      - name: Upload V31 Firebase APK
+      - name: Upload V32 Firebase APK
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V31-FIREBASE-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V31-FIREBASE-debug.apk
+          name: NFT-BATTLE-V32-FIREBASE-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V32-FIREBASE-debug.apk
           if-no-files-found: error
           retention-days: 7

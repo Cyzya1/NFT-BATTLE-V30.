@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "**/NFT_BATTLE_BIG_UPDATE_V34.zip"
+      - "NFT_BATTLE_BIG_UPDATE_V34.zip"
       - ".github/workflows/build-apk-v34.yml"
 
 permissions:
@@ -28,40 +28,19 @@ jobs:
           java-version: "17"
 
       - name: Install Gradle
-        shell: bash
         run: |
-          set -euo pipefail
           curl -fL --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip -o "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
       - name: Extract V34 project
-        shell: bash
         run: |
-          set -euo pipefail
-
-          echo "Searching for V34 ZIP..."
-          ZIP_PATH="$(find "$GITHUB_WORKSPACE" -type f -iname 'NFT_BATTLE_BIG_UPDATE_V34.zip' -print -quit)"
-
-          if [ -z "$ZIP_PATH" ]; then
-            echo "::error::V34 ZIP not found anywhere in repository"
-            echo "Repository files:"
-            find "$GITHUB_WORKSPACE" -maxdepth 5 -type f
-            exit 1
-          fi
-
-          echo "Found archive: $ZIP_PATH"
-
-          mkdir -p "$RUNNER_TEMP/nft-battle-source"
-          unzip -oq "$ZIP_PATH" -d "$RUNNER_TEMP/nft-battle-source"
+          unzip -oq NFT_BATTLE_BIG_UPDATE_V34.zip -d "$RUNNER_TEMP/nft-battle-source"
 
       - name: Locate Android project
-        shell: bash
         run: |
-          set -euo pipefail
           BASE="$RUNNER_TEMP/nft-battle-source"
           PROJECT=""
-
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
             if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
@@ -69,30 +48,16 @@ jobs:
               break
             fi
           done < <(find "$BASE" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
-
-          if [ -z "$PROJECT" ]; then
-            echo "::error::Android project not found"
-            find "$BASE" -maxdepth 5 -type f
-            exit 1
-          fi
-
-          echo "Android project: $PROJECT"
+          test -n "$PROJECT" || { echo "Android project not found"; exit 1; }
           echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
 
       - name: Build V34 debug APK
         run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon --stacktrace
 
       - name: Verify and prepare APK
-        shell: bash
         run: |
-          set -euo pipefail
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
-
-          if [ -z "$APK" ] || [ ! -s "$APK" ]; then
-            echo "::error::APK was not created"
-            exit 1
-          fi
-
+          test -s "$APK" || { echo "APK was not created"; exit 1; }
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
           cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34-debug.apk"
 

@@ -1,11 +1,10 @@
-
 name: Build NFT BATTLE V34 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_WITH_SOCIAL_LINKS.zip"
+      - "NFT_BATTLE_V34_24_FEATURES_WORKING.zip"
       - ".github/workflows/build-apk-v34.yml"
 
 permissions:
@@ -40,11 +39,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_WITH_SOCIAL_LINKS.zip"
+          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_24_FEATURES_WORKING.zip"
           BASE="$RUNNER_TEMP/nft-source"
 
           test -s "$BUNDLE" || {
-            echo "::error::NFT_BATTLE_V34_WITH_SOCIAL_LINKS.zip not found"
+            echo "::error::NFT_BATTLE_V34_24_FEATURES_WORKING.zip not found"
             exit 1
           }
 

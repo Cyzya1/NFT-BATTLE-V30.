@@ -1,10 +1,11 @@
+
 name: Build NFT BATTLE V34 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_APK_BUILD_FILES.zip"
+      - "NFT_BATTLE_V34_WITH_SOCIAL_LINKS.zip"
       - ".github/workflows/build-apk-v34.yml"
 
 permissions:
@@ -34,33 +35,33 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract V34 build bundle and project
+      - name: Extract V34 project
         shell: bash
         run: |
           set -euo pipefail
-          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_APK_BUILD_FILES.zip"
-          test -s "$BUNDLE" || { echo "::error::V34 build bundle not found: $BUNDLE"; exit 1; }
+          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_WITH_SOCIAL_LINKS.zip"
+          test -s "$BUNDLE" || { echo "::error::V34 ZIP not found"; exit 1; }
 
-          mkdir -p "$RUNNER_TEMP/nft-battle-bundle" "$RUNNER_TEMP/nft-battle-source"
-          unzip -oq "$BUNDLE" -d "$RUNNER_TEMP/nft-battle-bundle"
+          mkdir -p "$RUNNER_TEMP/nft-bundle" "$RUNNER_TEMP/nft-source"
+          unzip -oq "$BUNDLE" -d "$RUNNER_TEMP/nft-bundle"
 
-          ARCHIVE="$(find "$RUNNER_TEMP/nft-battle-bundle" -type f -name 'NFT_BATTLE_BIG_UPDATE_V34.zip' -print -quit)"
+          ARCHIVE="$(find "$RUNNER_TEMP/nft-bundle" -type f -name 'NFT_BATTLE_BIG_UPDATE_V34.zip' -print -quit)"
+
           if [ -z "$ARCHIVE" ]; then
-            echo "::error::NFT_BATTLE_BIG_UPDATE_V34.zip not found inside build bundle"
-            echo "Bundle contents:"
-            find "$RUNNER_TEMP/nft-battle-bundle" -maxdepth 5 -type f -print
+            echo "::error::NFT_BATTLE_BIG_UPDATE_V34.zip not found inside bundle"
+            find "$RUNNER_TEMP/nft-bundle" -maxdepth 5 -type f -print
             exit 1
           fi
 
-          echo "Found V34 source archive: $ARCHIVE"
-          unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
+          unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-source"
 
       - name: Locate Android project
         shell: bash
         run: |
           set -euo pipefail
-          BASE="$RUNNER_TEMP/nft-battle-source"
+          BASE="$RUNNER_TEMP/nft-source"
           PROJECT=""
+
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
             if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
@@ -75,28 +76,25 @@ jobs:
             exit 1
           fi
 
-          echo "Android project: $PROJECT"
           echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
 
-      - name: Build V34 debug APK
+      - name: Build V34 APK
         run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon --stacktrace
 
-      - name: Verify and prepare APK
+      - name: Prepare APK
         shell: bash
         run: |
           set -euo pipefail
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
-          if [ -z "$APK" ] || [ ! -s "$APK" ]; then
-            echo "::error::APK was not created"
-            exit 1
-          fi
-          mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34-debug.apk"
+          test -s "$APK" || { echo "::error::APK not created"; exit 1; }
 
-      - name: Upload V34 APK
+          mkdir -p "$RUNNER_TEMP/nft-apk"
+          cp "$APK" "$RUNNER_TEMP/nft-apk/NFT-BATTLE-V34-debug.apk"
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NFT-BATTLE-V34-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34-debug.apk
+          path: ${{ runner.temp }}/nft-apk/NFT-BATTLE-V34-debug.apk
           if-no-files-found: error
           retention-days: 7

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_2_WEB_APP_ID.zip"
+      - "NFT_BATTLE_V34_2_FIREBASE_CONFIG_FIXED.zip"
       - ".github/workflows/build-apk-v34.yml"
 
 permissions:
@@ -39,11 +39,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_2_WEB_APP_ID.zip"
+          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_2_FIREBASE_CONFIG_FIXED.zip"
           BASE="$RUNNER_TEMP/nft-source"
 
           test -s "$BUNDLE" || {
-            echo "::error::NFT_BATTLE_V34_2_WEB_APP_ID.zip not found"
+            echo "::error::NFT_BATTLE_V34_2_FIREBASE_CONFIG_FIXED.zip not found"
             exit 1
           }
 

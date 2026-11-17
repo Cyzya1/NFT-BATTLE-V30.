@@ -1,21 +1,20 @@
-name: Build NFT BATTLE V34 APK
+name: Build NFT BATTLE V34.7 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_3_FIREBASE_COMPAT_FIX.zip"
-      - ".github/workflows/build-apk-v34.yml"
+      - "NFT_BATTLE_V34_7_ADMIN_MODERATION_BUFFS.zip"
+      - ".github/workflows/build-apk-v34-7.yml"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK V34
+    name: Build Android APK V34.7
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Gradle
+      - name: Install Gradle 8.9
         shell: bash
         run: |
           set -euo pipefail
@@ -34,83 +33,47 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract ZIP and locate Android project
+      - name: Extract V34.7 project archive
         shell: bash
         run: |
           set -euo pipefail
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_7_ADMIN_MODERATION_BUFFS.zip"
+          test -s "$ARCHIVE" || { echo "::error::V34.7 project ZIP not found: $ARCHIVE"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/nft-battle-source"
+          unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
 
-          BUNDLE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_3_FIREBASE_COMPAT_FIX.zip"
-          BASE="$RUNNER_TEMP/nft-source"
-
-          test -s "$BUNDLE" || {
-            echo "::error::NFT_BATTLE_V34_3_FIREBASE_COMPAT_FIX.zip not found"
-            exit 1
-          }
-
-          mkdir -p "$BASE"
-          unzip -oq "$BUNDLE" -d "$BASE"
-
-          # Extract nested ZIP archives
-          for ROUND in 1 2 3; do
-            FOUND=0
-
-            while IFS= read -r -d '' ARCHIVE; do
-              DEST="${ARCHIVE%.zip}_extracted"
-
-              if [ ! -d "$DEST" ]; then
-                mkdir -p "$DEST"
-                unzip -oq "$ARCHIVE" -d "$DEST"
-                FOUND=1
-              fi
-            done < <(find "$BASE" -type f -iname '*.zip' -print0)
-
-            [ "$FOUND" -eq 1 ] || break
-          done
-
-          # Locate Android project
-          PROJECT=""
-
+      - name: Locate Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/nft-battle-source"
+          PROJECT_DIR=""
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
-
             if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
-              PROJECT="$DIR"
+              PROJECT_DIR="$DIR"
               break
             fi
           done < <(find "$BASE" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
+          test -n "$PROJECT_DIR" || { echo "::error::Android Gradle project not found in V34.7 ZIP"; exit 1; }
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          if [ -z "$PROJECT" ]; then
-            echo "::error::Android project not found in ZIP"
-            echo "Archive contents:"
-            find "$BASE" -maxdepth 7 -type f | head -200
-            exit 1
-          fi
-
-          echo "Android project found: $PROJECT"
-          echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
-
-      - name: Build V34 debug APK
+      - name: Build debug APK
         run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon --stacktrace
 
-      - name: Verify APK
+      - name: Verify and prepare APK
         shell: bash
         run: |
           set -euo pipefail
-
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
+          test -s "$APK" || { echo "::error::Gradle did not produce a debug APK"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/nft-battle-apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34.7-debug.apk"
 
-          if [ -z "$APK" ] || [ ! -s "$APK" ]; then
-            echo "::error::APK was not created"
-            exit 1
-          fi
-
-          mkdir -p "$RUNNER_TEMP/nft-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-apk/NFT-BATTLE-V34-debug.apk"
-
-      - name: Upload V34 APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V34-APK
-          path: ${{ runner.temp }}/nft-apk/NFT-BATTLE-V34-debug.apk
+          name: NFT-BATTLE-V34.7-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34.7-debug.apk
           if-no-files-found: error
           retention-days: 7

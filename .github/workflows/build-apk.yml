@@ -1,18 +1,18 @@
-name: Build NFT BATTLE V34.10 APK
+name: Build NFT BATTLE V34.12 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_10_GAME_UPGRADE.zip"
-      - ".github/workflows/build-apk-v34_10.yml"
+      - "NFT_BATTLE_V34_12_CLAN_500B.zip"
+      - ".github/workflows/build-apk-v34_12.yml"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK V34.10
+    name: Build Android APK V34.12
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -30,12 +30,12 @@ jobs:
           curl -fL --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip -o "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
-      - name: Extract V34.10 project archive
+      - name: Extract V34.12 project archive
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_10_GAME_UPGRADE.zip"
-          test -s "$ARCHIVE" || { echo "::error::V34.10 project ZIP not found"; exit 1; }
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_12_CLAN_500B.zip"
+          test -s "$ARCHIVE" || { echo "::error::V34.12 project ZIP not found"; exit 1; }
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
       - name: Locate Android project
@@ -59,11 +59,11 @@ jobs:
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
           test -s "$APK" || { echo "::error::Gradle did not produce APK"; exit 1; }
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34.10-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34.12-debug.apk"
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V34.10-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34.10-debug.apk
+          name: NFT-BATTLE-V34.12-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34.12-debug.apk
           if-no-files-found: error
           retention-days: 7

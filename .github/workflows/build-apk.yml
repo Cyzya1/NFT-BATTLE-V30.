@@ -1,28 +1,30 @@
-name: Build NFT BATTLE V34.14 APK
+name: Build NFT BATTLE V34.15 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V34_14_POLISH_FIX.zip"
-      - ".github/workflows/build-apk-v34_14.yml"
+      - "NFT_BATTLE_V34_15_SAB3_FULL_FIX.zip"
+      - ".github/workflows/build-apk-v34_15.yml"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK V34.14
+    name: Build Android APK V34.15
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
+
       - name: Install Gradle 8.9
         shell: bash
         run: |
@@ -30,28 +32,53 @@ jobs:
           curl -fL --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip -o "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
-      - name: Extract V34.14 project archive
+
+      - name: Validate source ZIP and extract project
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_14_POLISH_FIX.zip"
-          test -s "$ARCHIVE" || { echo "::error::V34.14 project ZIP not found"; exit 1; }
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V34_15_SAB3_FULL_FIX.zip"
+          test -s "$ARCHIVE" || { echo "::error::V34.15 project ZIP not found"; exit 1; }
+          unzip -tq "$ARCHIVE"
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
-      - name: Locate Android project
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE="$RUNNER_TEMP/nft-battle-source"
           PROJECT_DIR=""
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
-            if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then PROJECT_DIR="$DIR"; break; fi
-          done < <(find "$BASE" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
+            if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
+              PROJECT_DIR="$DIR"
+              break
+            fi
+          done < <(find "$RUNNER_TEMP/nft-battle-source" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
           test -n "$PROJECT_DIR" || { echo "::error::Android Gradle project not found"; exit 1; }
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check "$PROJECT_DIR/functions/index.js"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          project = Path(os.environ["PROJECT_DIR"])
+          html = (project / "app/src/main/assets/index.html").read_text(encoding="utf-8")
+          blocks = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, re.S | re.I)
+          scripts = [b for b in blocks if b.strip()]
+          if not scripts:
+              raise SystemExit("No inline application scripts found")
+          out = Path(os.environ["RUNNER_TEMP"]) / "nft-inline-js"
+          out.mkdir(parents=True, exist_ok=True)
+          for i, code in enumerate(scripts):
+              (out / f"script-{i}.js").write_text(code, encoding="utf-8")
+          print(f"Prepared {len(scripts)} inline JavaScript blocks")
+          PY
+          while IFS= read -r SCRIPT; do node --check "$SCRIPT"; done < <(find "$RUNNER_TEMP/nft-inline-js" -type f -name '*.js' -print)
+
       - name: Build debug APK
         run: gradle -p "$PROJECT_DIR" assembleDebug --no-daemon --stacktrace
+
       - name: Verify and prepare APK
         shell: bash
         run: |
@@ -59,11 +86,12 @@ jobs:
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
           test -s "$APK" || { echo "::error::Gradle did not produce APK"; exit 1; }
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34.14-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V34.15-debug.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V34.14-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34.14-debug.apk
+          name: NFT-BATTLE-V34.15-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V34.15-debug.apk
           if-no-files-found: error
           retention-days: 7

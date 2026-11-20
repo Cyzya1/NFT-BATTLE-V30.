@@ -1,19 +1,19 @@
 
-name: Build NFT BATTLE V35.20 APK
+name: Build NFT BATTLE V35.21 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_20_OPTIMIZED.zip"
-      - ".github/workflows/build-apk-v35_20.yml"
+      - "NFT_BATTLE_V35_21_CINEMATIC.zip"
+      - ".github/workflows/build-apk-v35_21.yml"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK V35.20
+    name: Build Android APK V35.21
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -37,14 +37,14 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract V35.20 project
+      - name: Extract V35.21 project
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_20_OPTIMIZED.zip"
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_21_CINEMATIC.zip"
 
           if [[ ! -f "$ARCHIVE" ]]; then
-            echo "::error::V35.20 ZIP not found in repository root"
+            echo "::error::V35.21 ZIP not found in repository root"
             ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi
@@ -114,15 +114,15 @@ jobs:
 
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
           cp "$APK" \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.20-debug.apk"
+            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.21-debug.apk"
 
           sha256sum \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.20-debug.apk"
+            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.21-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V35.20-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.20-debug.apk
+          name: NFT-BATTLE-V35.21-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.21-debug.apk
           if-no-files-found: error
           retention-days: 7

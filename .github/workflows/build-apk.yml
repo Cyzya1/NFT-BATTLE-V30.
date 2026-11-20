@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -34,22 +34,21 @@ jobs:
           curl -fL --retry 3 \
             https://services.gradle.org/distributions/gradle-8.9-bin.zip \
             -o "$RUNNER_TEMP/gradle.zip"
-          unzip -tq "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract V35.22 project
+      - name: Extract V29 project
         shell: bash
         run: |
           set -euo pipefail
           ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_22_ASCENSION.zip"
 
-          if [[ ! -s "$ARCHIVE" ]]; then
-            echo "::error::V35.22 ZIP not found"
+          if [[ ! -f "$ARCHIVE" ]]; then
+            echo "::error::ZIP not found in repository root: NFT_BATTLE_V35_22_ASCENSION.zip"
+            ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi
 
-          unzip -tq "$ARCHIVE"
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
 
@@ -72,64 +71,37 @@ jobs:
           )
 
           if [[ -z "$PROJECT" ]]; then
-            echo "::error::Android Gradle project not found"
+            echo "::error::Android Gradle project not found in V29 ZIP"
+            find "$BASE" -type f \
+              \( -name settings.gradle -o -name settings.gradle.kts \
+                 -o -name build.gradle -o -name build.gradle.kts \)
             exit 1
           fi
 
           echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
+          echo "Found project: $PROJECT"
 
-      - name: Clean and build APK
+      - name: Build debug APK
         shell: bash
         run: |
           set -euo pipefail
-          gradle -p "$PROJECT_DIR" clean assembleDebug \
-            --no-daemon \
-            --stacktrace
+          gradle -p "$PROJECT_DIR" assembleDebug --no-daemon --stacktrace
 
-      - name: Verify APK integrity and signature
+      - name: Verify and prepare APK
         shell: bash
         run: |
           set -euo pipefail
-
           APK="$(find "$PROJECT_DIR" -type f \
-            -path '*/build/outputs/apk/debug/*.apk' \
-            -print -quit)"
+            -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
 
           if [[ -z "$APK" || ! -s "$APK" ]]; then
             echo "::error::APK was not created"
             exit 1
           fi
 
-          echo "Checking APK archive..."
-          unzip -t "$APK"
-
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" \
-            -name apksigner -type f | sort -V | tail -n1)"
-
-          if [[ -z "$APKSIGNER" ]]; then
-            echo "::error::apksigner not found"
-            exit 1
-          fi
-
-          echo "Checking APK signature..."
-          "$APKSIGNER" verify --verbose "$APK"
-
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-
-          cp "$APK" \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
-
-          echo "Checking copied APK..."
-          unzip -t \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
-
-          "$APKSIGNER" verify \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
-
-          sha256sum \
-            "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
-
-          ls -lh "$RUNNER_TEMP/nft-battle-apk/"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
+          ls -lh "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

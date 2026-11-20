@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_22_ASCENSION.zip"
+      - "NFT_BATTLE_V35_22(1)_ASCENSION.zip"
       - ".github/workflows/build-apk.yml"
 
 permissions:
@@ -41,10 +41,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_22_ASCENSION.zip"
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_22(1)_ASCENSION.zip"
 
           if [[ ! -f "$ARCHIVE" ]]; then
-            echo "::error::ZIP not found in repository root: NFT_BATTLE_V35_22_ASCENSION.zip"
+            echo "::error::ZIP not found in repository root: NFT_BATTLE_V35_22(1)_ASCENSION.zip"
             ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_22_ASCENSION(1).zip"
+      - "NFT_BATTLE_V35_25_CINEMATIC.zip"
       - ".github/workflows/build-apk.yml"
 
 permissions:
@@ -37,14 +37,14 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Extract V29 project
+      - name: Extract V35.25 project
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_22_ASCENSION(1).zip"
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_25_CINEMATIC.zip"
 
           if [[ ! -f "$ARCHIVE" ]]; then
-            echo "::error::ZIP not found in repository root: NFT_BATTLE_V35_22_ASCENSION(1).zip"
+            echo "::error::ZIP not found in repository root: NFT_BATTLE_V35_25_CINEMATIC.zip"
             ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi
@@ -71,7 +71,7 @@ jobs:
           )
 
           if [[ -z "$PROJECT" ]]; then
-            echo "::error::Android Gradle project not found in V29 ZIP"
+            echo "::error::Android Gradle project not found in V35.25 ZIP"
             find "$BASE" -type f \
               \( -name settings.gradle -o -name settings.gradle.kts \
                  -o -name build.gradle -o -name build.gradle.kts \)

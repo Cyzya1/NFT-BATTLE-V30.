@@ -1,11 +1,11 @@
-name: Build NFT BATTLE V35.32 APK
+name: Build NFT BATTLE V35.33 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_32_CINEMATIC.zip"
-      - ".github/workflows/build-apk-v35-32.yml"
+      - "NFT_BATTLE_V35_33_CINEMATIC.zip"
+      - ".github/workflows/build-apk-v35-33.yml"
 
 permissions:
   contents: read
@@ -39,8 +39,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_32_CINEMATIC.zip"
-          test -s "$ARCHIVE" || { echo "::error::V35.32 ZIP not found"; ls -la "$GITHUB_WORKSPACE"; exit 1; }
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_33_CINEMATIC.zip"
+          test -s "$ARCHIVE" || { echo "::error::V35.33 ZIP not found"; ls -la "$GITHUB_WORKSPACE"; exit 1; }
           unzip -tq "$ARCHIVE"
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
@@ -73,13 +73,13 @@ jobs:
           test -n "$APK" && test -s "$APK" || { echo "::error::APK was not created"; exit 1; }
           unzip -tq "$APK"
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.32-debug.apk"
-          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.32-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk"
+          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V35.32-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.32-debug.apk
+          name: NFT-BATTLE-V35.33-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk
           if-no-files-found: error
           retention-days: 7

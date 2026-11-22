@@ -1,11 +1,12 @@
-name: Build NFT BATTLE V35.33 APK
+
+name: Build NFT BATTLE V35.34 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_33_CINEMATIC.zip"
-      - ".github/workflows/build-apk-v35-33.yml"
+      - "NFT_BATTLE_V35_34_CHARACTER_CINEMA.zip"
+      - ".github/workflows/build-apk-v35-34.yml"
 
 permissions:
   contents: read
@@ -15,6 +16,7 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,8 +41,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_33_CINEMATIC.zip"
-          test -s "$ARCHIVE" || { echo "::error::V35.33 ZIP not found"; ls -la "$GITHUB_WORKSPACE"; exit 1; }
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_34_CHARACTER_CINEMA.zip"
+          test -s "$ARCHIVE" || {
+            echo "::error::V35.34 ZIP not found"
+            ls -la "$GITHUB_WORKSPACE"
+            exit 1
+          }
           unzip -tq "$ARCHIVE"
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
@@ -51,6 +57,7 @@ jobs:
           set -euo pipefail
           BASE="$RUNNER_TEMP/nft-battle-source"
           PROJECT=""
+
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
             if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
@@ -58,28 +65,39 @@ jobs:
               break
             fi
           done < <(find "$BASE" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
-          test -n "$PROJECT" || { echo "::error::Android Gradle project not found"; exit 1; }
+
+          test -n "$PROJECT" || {
+            echo "::error::Android Gradle project not found"
+            exit 1
+          }
+
           echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
 
       - name: Build debug APK
         shell: bash
-        run: gradle -p "$PROJECT_DIR" clean assembleDebug --no-daemon --stacktrace
+        run: |
+          gradle -p "$PROJECT_DIR" clean assembleDebug --no-daemon --stacktrace
 
       - name: Verify APK
         shell: bash
         run: |
           set -euo pipefail
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
-          test -n "$APK" && test -s "$APK" || { echo "::error::APK was not created"; exit 1; }
+
+          test -n "$APK" && test -s "$APK" || {
+            echo "::error::APK was not created"
+            exit 1
+          }
+
           unzip -tq "$APK"
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk"
-          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.34-debug.apk"
+          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.34-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V35.33-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.33-debug.apk
+          name: NFT-BATTLE-V35.34-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.34-debug.apk
           if-no-files-found: error
           retention-days: 7

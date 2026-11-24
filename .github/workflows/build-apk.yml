@@ -1,11 +1,11 @@
-name: Build NFT BATTLE V35.35 APK
+name: Build NFT BATTLE V35.36 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "NFT_BATTLE_V35_35_2D_CINEMA.zip"
-      - ".github/workflows/build-apk-v35-35.yml"
+      - "NFT_BATTLE_V35_36_BOTTOM_POINTER.zip"
+      - ".github/workflows/build-apk-v35-36.yml"
 
 permissions:
   contents: read
@@ -18,27 +18,37 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
+
       - name: Install Gradle 8.9
         shell: bash
         run: |
           set -euo pipefail
-          curl -fL --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip -o "$RUNNER_TEMP/gradle.zip"
+          curl -fL --retry 3 \\
+            https://services.gradle.org/distributions/gradle-8.9-bin.zip \\
+            -o "$RUNNER_TEMP/gradle.zip"
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
+
       - name: Verify and extract source archive
         shell: bash
         run: |
           set -euo pipefail
-          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_35_2D_CINEMA.zip"
-          test -s "$ARCHIVE" || { echo "::error::V35.35 ZIP not found"; ls -la "$GITHUB_WORKSPACE"; exit 1; }
+          ARCHIVE="$GITHUB_WORKSPACE/NFT_BATTLE_V35_36_BOTTOM_POINTER.zip"
+          test -s "$ARCHIVE" || {
+            echo "::error::V35.36 ZIP not found"
+            ls -la "$GITHUB_WORKSPACE"
+            exit 1
+          }
           unzip -tq "$ARCHIVE"
           mkdir -p "$RUNNER_TEMP/nft-battle-source"
           unzip -oq "$ARCHIVE" -d "$RUNNER_TEMP/nft-battle-source"
+
       - name: Locate Android project
         shell: bash
         run: |
@@ -47,26 +57,39 @@ jobs:
           PROJECT=""
           while IFS= read -r SETTINGS; do
             DIR="$(dirname "$SETTINGS")"
-            if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then PROJECT="$DIR"; break; fi
-          done < <(find "$BASE" -type f \( -name settings.gradle -o -name settings.gradle.kts \))
-          test -n "$PROJECT" || { echo "::error::Android Gradle project not found"; exit 1; }
+            if [[ -f "$DIR/app/build.gradle" || -f "$DIR/app/build.gradle.kts" ]]; then
+              PROJECT="$DIR"
+              break
+            fi
+          done < <(find "$BASE" -type f \\( -name settings.gradle -o -name settings.gradle.kts \\))
+          test -n "$PROJECT" || {
+            echo "::error::Android Gradle project not found"
+            exit 1
+          }
           echo "PROJECT_DIR=$PROJECT" >> "$GITHUB_ENV"
+
       - name: Build debug APK
+        shell: bash
         run: gradle -p "$PROJECT_DIR" clean assembleDebug --no-daemon --stacktrace
+
       - name: Verify APK
         shell: bash
         run: |
           set -euo pipefail
           APK="$(find "$PROJECT_DIR" -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
-          test -n "$APK" && test -s "$APK" || { echo "::error::APK was not created"; exit 1; }
+          test -n "$APK" && test -s "$APK" || {
+            echo "::error::APK was not created"
+            exit 1
+          }
           unzip -tq "$APK"
           mkdir -p "$RUNNER_TEMP/nft-battle-apk"
-          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.35-debug.apk"
-          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.35-debug.apk"
+          cp "$APK" "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.36-debug.apk"
+          sha256sum "$RUNNER_TEMP/nft-battle-apk/NFT-BATTLE-V35.36-debug.apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NFT-BATTLE-V35.35-APK
-          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.35-debug.apk
+          name: NFT-BATTLE-V35.36-APK
+          path: ${{ runner.temp }}/nft-battle-apk/NFT-BATTLE-V35.36-debug.apk
           if-no-files-found: error
           retention-days: 7
